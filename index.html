@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة المهام</title>
+  <style>
+    /* ألوان أساسية للثيم الداكن والفاتح */
+    :root {
+      --bg-color: #fff;
+      --text-color: #333;
+      --input-bg: #f0f0f0;
+      --btn-bg: #4CAF50;
+      --btn-hover: #45a049;
+      --task-bg: #f9f9f9;
+      --delete-bg: #f44336;
+      --delete-hover: #da190b;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-color: #1e1e1e;
+        --text-color: #eee;
+        --input-bg: #333;
+        --btn-bg: #28a745;
+        --btn-hover: #218838;
+        --task-bg: #2c2c2c;
+        --delete-bg: #dc3545;
+        --delete-hover: #c82333;
+      }
+    }
+
+    /* الجسم والخط */
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      padding: 50px 20px;
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .todo-container {
+      background: var(--bg-color);
+      padding: 25px 35px;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .input-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    #task-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      font-size: 16px;
+      outline: none;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    #add-btn {
+      padding: 10px 15px;
+      margin-left: 10px;
+      border: none;
+      background: var(--btn-bg);
+      color: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    #add-btn:hover {
+      background: var(--btn-hover);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      background: var(--task-bg);
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s, color 0.3s;
+      color: var(--text-color);
+    }
+
+    li:hover {
+      transform: scale(1.02);
+    }
+
+    li.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .delete-btn {
+      background: var(--delete-bg);
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .delete-btn:hover {
+      background: var(--delete-hover);
+    }
+
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-color);
+    }
+
+    footer a {
+      color: var(--btn-bg);
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="todo-container">
+    <h1>قائمة المهام</h1>
+    <div class="input-container">
+      <input type="text" id="task-input" placeholder="اكتب مهمتك هنا...">
+      <button id="add-btn">أضف</button>
+    </div>
+    <ul id="task-list"></ul>
+  </div>
+
+  <footer>
+    تواصل: 
+    <a href="https://instagram.com/247.4" target="_blank">Instagram</a> | 
+    <a href="https://t.me/Upside2474" target="_blank">Telegram</a>
+  </footer>
+
+  <script>
+    const taskInput = document.getElementById('task-input');
+    const addBtn = document.getElementById('add-btn');
+    const taskList = document.getElementById('task-list');
+
+    // تحميل المهام من localStorage عند بدء الصفحة
+    function loadTasks() {
+      const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      taskList.innerHTML = '';
+      savedTasks.forEach(task => addTaskToDOM(task.text, task.completed));
+    }
+
+    window.onload = loadTasks;
+
+    addBtn.addEventListener('click', () => {
+      const taskText = taskInput.value.trim();
+      if(taskText !== '') {
+        addTaskToDOM(taskText, false);
+        saveTask(taskText, false);
+        taskInput.value = '';
+      }
+    });
+
+    function addTaskToDOM(text, completed) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      if(completed) li.classList.add('completed');
+
+      li.addEventListener('click', () => {
+        li.classList.toggle('completed');
+        updateLocalStorage();
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'حذف';
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        li.remove();
+        updateLocalStorage();
+      });
+
+      li.appendChild(deleteBtn);
+      taskList.appendChild(li);
+    }
+
+    function saveTask(text, completed) {
+      const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+      tasks.push({ text, completed });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function updateLocalStorage() {
+      const tasks = [];
+      taskList.querySelectorAll('li').forEach(li => {
+        const text = li.childNodes[0].textContent;
+        const completed = li.classList.contains('completed');
+        tasks.push({ text, completed });
+      });
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // السماح بالضغط على Enter لإضافة المهمة
+    taskInput.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter') addBtn.click();
+    });
+
+    // ضبط لون النص عكس الخلفية تلقائياً
+    function adjustTextColor() {
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.style.setProperty('--text-color', dark ? '#fff' : '#000');
+    }
+
+    window.addEventListener('load', adjustTextColor);
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', adjustTextColor);
+  </script>
+</body>
+</html>
